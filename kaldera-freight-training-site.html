@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<!--
+  ====================================================================
+  TRAINING ARTIFACT — INTENTIONALLY VULNERABLE PRACTICE SITE
+  Fictional company. No real brand, person, or organization is depicted.
+  Built for junior security training: OSINT reconnaissance + finding/
+  patching web vulnerabilities. Do not deploy publicly or reuse any
+  "vulnerable" logic in production code.
+
+  DEV NOTE (jm): remembered to strip the staging creds before the demo??
+  staging: https://staging.kalderafreight.example (never actually resolves)
+  temp admin acct for QA -> user: admin  pass: admin123  (DELETE BEFORE LAUNCH)
+  API_KEY_PLACEHOLDER = "kf_live_4f9ab2_DO_NOT_COMMIT"
+  ticket ref: KAL-1183 (staff portal login still uses string-concat query, fix before audit)
+  ====================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaldera Freight Ltd — Regional Logistics &amp; Haulage</title>
+<meta name="description" content="Kaldera Freight Ltd — road freight, warehousing and customs handling across the Baltic region since 2004.">
+<meta name="author" content="R. Ozols, IT &amp; Web (r.ozols@kalderafreight.example)">
+<!-- staff directory generated from HR export 2022-03-14, format is firstinitial.lastname@kalderafreight.example -->
+<style>
+  :root{
+    --navy:#1b3550;
+    --navy-deep:#122536;
+    --teal:#2f6690;
+    --paper:#f3f2ec;
+    --paper-dim:#e7e5db;
+    --ink:#242321;
+    --muted:#6b6a63;
+    --flag:#a4321f;
+    --ok:#3c6e47;
+    --focus:#2f6690;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:Arial, Helvetica, sans-serif;
+    line-height:1.5;
+  }
+  h1,h2,h3{
+    font-family:Georgia, 'Times New Roman', serif;
+    font-weight:700;
+    color:var(--navy-deep);
+    margin:0 0 .4em;
+  }
+  a{color:var(--teal);}
+  a:focus, button:focus, input:focus, textarea:focus{
+    outline:3px solid var(--focus);
+    outline-offset:2px;
+  }
+  header.site{
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-deep) 100%);
+    color:#eef1f4;
+    padding:0;
+  }
+  .topbar{
+    display:flex; justify-content:space-between; align-items:center;
+    max-width:1040px; margin:0 auto; padding:18px 20px;
+    flex-wrap:wrap; gap:10px;
+  }
+  .brand{display:flex; align-items:baseline; gap:10px;}
+  .brand-mark{
+    width:34px;height:34px;border-radius:4px;
+    background:var(--teal);
+    display:inline-flex;align-items:center;justify-content:center;
+    font-family:Georgia,serif;font-weight:700;color:#fff;
+  }
+  .brand h1{color:#fff;font-size:1.3rem;margin:0;}
+  .brand small{display:block;color:#c3cdd6;font-size:.7rem;letter-spacing:.05em;}
+  nav.main{display:flex;gap:18px;flex-wrap:wrap;}
+  nav.main button{
+    background:none;border:none;color:#dfe6ec;font:inherit;cursor:pointer;
+    padding:6px 2px;border-bottom:2px solid transparent;
+  }
+  nav.main button:hover, nav.main button.active{border-bottom-color:var(--teal);color:#fff;}
+  .hero{
+    max-width:1040px;margin:0 auto;padding:46px 20px 60px;
+    display:grid;grid-template-columns:1.3fr 1fr;gap:30px;align-items:center;
+  }
+  .hero h2{color:#fff;font-size:2rem;line-height:1.15;}
+  .hero p{color:#c3cdd6;max-width:42ch;}
+  .hero-panel{
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:6px;padding:18px;color:#dfe6ec;font-size:.85rem;
+  }
+  .hero-panel dt{color:#8fa6b8;text-transform:uppercase;font-size:.65rem;letter-spacing:.08em;margin-top:8px;}
+  .hero-panel dd{margin:2px 0 0;}
+  main{max-width:1040px;margin:0 auto;padding:34px 20px 70px;}
+  section{display:none;}
+  section.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  .card{
+    background:#fff;border:1px solid var(--paper-dim);border-radius:6px;
+    padding:22px;margin-bottom:18px;
+  }
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .staffcard{background:#fff;border:1px solid var(--paper-dim);border-radius:6px;padding:14px;}
+  .staffcard .role{color:var(--muted);font-size:.85rem;}
+  .staffcard .mail{font-family:monospace;font-size:.8rem;color:var(--teal);}
+  .breadcrumb{color:var(--muted);font-size:.8rem;margin-bottom:14px;}
+  footer{
+    background:var(--navy-deep);color:#9fb0bd;padding:26px 20px;font-size:.8rem;
+  }
+  footer .fmax{max-width:1040px;margin:0 auto;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  code.hint{background:#eee;padding:1px 5px;border-radius:3px;}
+  .flagbox{
+    border:1px dashed var(--flag);background:#fbeae6;color:var(--flag);
+    padding:8px 10px;border-radius:4px;font-size:.8rem;margin-top:10px;display:none;
+  }
+  .flagbox.show{display:block;}
+  label{display:block;font-size:.85rem;color:var(--muted);margin:12px 0 4px;}
+  input[type=text],input[type=password],textarea{
+    width:100%;padding:9px 10px;border:1px solid #cfd0c8;border-radius:4px;font:inherit;
+  }
+  button.action{
+    margin-top:14px;background:var(--teal);color:#fff;border:none;
+    padding:9px 16px;border-radius:4px;font:inherit;cursor:pointer;
+  }
+  button.action:hover{background:var(--navy);}
+  .msg-wall{margin-top:18px;display:flex;flex-direction:column;gap:8px;}
+  .msg{background:var(--paper);border:1px solid var(--paper-dim);padding:8px 10px;border-radius:4px;font-size:.85rem;}
+  .msg .who{color:var(--muted);font-size:.7rem;}
+  .adminpanel{border:1px solid var(--ok);background:#eef6ef;padding:16px;border-radius:6px;margin-top:14px;}
+  .keybtn{
+    position:fixed;bottom:14px;right:14px;background:var(--navy);color:#fff;
+    border:none;padding:8px 12px;border-radius:20px;font-size:.75rem;cursor:pointer;opacity:.85;
+  }
+  .keypanel{
+    position:fixed;bottom:56px;right:14px;width:min(420px,90vw);max-height:70vh;overflow:auto;
+    background:#fff;border:1px solid var(--paper-dim);border-radius:8px;padding:16px;
+    box-shadow:0 8px 30px rgba(0,0,0,.2);display:none;font-size:.85rem;
+  }
+  .keypanel.show{display:block;}
+  .keypanel h4{margin:14px 0 4px;color:var(--flag);}
+  .keypanel h4:first-child{margin-top:0;}
+  .disallow-hint{font-family:monospace;font-size:.75rem;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-mark">KF</span>
+      <div>
+        <h1>Kaldera Freight Ltd</h1>
+        <small>ROAD &amp; RAIL LOGISTICS — EST. 2004</small>
+      </div>
+    </div>
+    <nav class="main">
+      <button data-target="home" class="active">Home</button>
+      <button data-target="team">Our Team</button>
+      <button data-target="feedback">Customer Feedback</button>
+      <button data-target="portal">Staff Portal</button>
+    </nav>
+  </div>
+  <div class="hero">
+    <div>
+      <h2>Freight that moves on your schedule, not ours.</h2>
+      <p>Family-run haulage and warehousing serving the Baltic region since 2004. Full-load, part-load and customs clearance.</p>
+    </div>
+    <dl class="hero-panel">
+      <dt>Registered office</dt><dd>12 Dzelzceļa iela, Rīga (fictional address)</dd>
+      <dt>Reg. no.</dt><dd>KF-2004-0071 (fictional)</dd>
+      <dt>Hosting</dt><dd>legacy-shared-host-03.example</dd>
+      <dt>Last CMS update</dt><dd>March 2022</dd>
+    </dl>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ HOME ============ -->
+  <section id="home" class="active">
+    <div class="breadcrumb">Home</div>
+    <div class="card">
+      <h3>About Kaldera Freight</h3>
+      <p>We operate 40 vehicles across the Baltic corridor, with a small warehouse team and a lean office staff. This site was built by an outside contractor in 2019 and has not been substantially updated since — a very typical situation for a small regional business, and a realistic OSINT/pentest target.</p>
+      <p><em>Exercise idea:</em> before touching any forms, see how much you can learn about the "organization" just from this page's public content and source code.</p>
+    </div>
+  </section>
+
+  <!-- ============ TEAM (OSINT surface) ============ -->
+  <section id="team">
+    <div class="breadcrumb">Home / Our Team</div>
+    <div class="card">
+      <h3>Our Team</h3>
+      <p>Meet the people behind Kaldera Freight. (All names and details below are fictional, generated for this exercise.)</p>
+      <div class="grid3">
+        <div class="staffcard">
+          <strong>Rihards Ozols</strong>
+          <div class="role">IT &amp; Website Administrator</div>
+          <div class="mail">r.ozols@kalderafreight.example</div>
+        </div>
+        <div class="staffcard">
+          <strong>Inta Kalniņa</strong>
+          <div class="role">Operations Manager</div>
+          <div class="mail">i.kalnina@kalderafreight.example</div>
+        </div>
+        <div class="staffcard">
+          <strong>Jānis Vītols</strong>
+          <div class="role">Dispatch Lead</div>
+          <div class="mail">j.vitols@kalderafreight.example</div>
+        </div>
+        <div class="staffcard">
+          <strong>Marta Bērziņa</strong>
+          <div class="role">Accounts</div>
+          <div class="mail">m.berzina@kalderafreight.example</div>
+        </div>
+        <div class="staffcard">
+          <strong>Toms Liepa</strong>
+          <div class="role">Warehouse Supervisor</div>
+          <div class="mail">t.liepa@kalderafreight.example</div>
+        </div>
+        <div class="staffcard">
+          <strong>Signe Kronberga</strong>
+          <div class="role">Customer Service</div>
+          <div class="mail">s.kronberga@kalderafreight.example</div>
+        </div>
+      </div>
+      <p style="margin-top:16px;font-size:.85rem;color:var(--muted);">
+        Sitemap note: <span class="disallow-hint">/staff-portal/ · /admin-legacy/ (disallowed in robots.txt, but reachable directly)</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ FEEDBACK (reflected XSS target) ============ -->
+  <section id="feedback">
+    <div class="breadcrumb">Home / Customer Feedback</div>
+    <div class="card">
+      <h3>Leave feedback</h3>
+      <p>Your message is posted straight to the public wall below — exactly as typed. <em>(This is intentional for the exercise: the input is rendered unescaped, so it's a classic reflected/stored XSS sandbox. Try a harmless payload like <code class="hint">&lt;img src=x onerror=alert(1)&gt;</code> and see what happens — then think about how you'd fix the rendering code.)</em></p>
+      <label for="fb-name">Name</label>
+      <input type="text" id="fb-name" placeholder="Your name">
+      <label for="fb-msg">Message</label>
+      <textarea id="fb-msg" rows="3" placeholder="How was our service?"></textarea>
+      <button class="action" id="fb-submit">Post feedback</button>
+      <div class="msg-wall" id="fb-wall">
+        <div class="msg"><div class="who">Customer, 2 days ago</div>Delivery was on time, thanks!</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STAFF PORTAL (naive SQLi-style bypass target) ============ -->
+  <section id="portal">
+    <div class="breadcrumb">Home / Staff Portal</div>
+    <div class="card">
+      <h3>Staff Portal Login</h3>
+      <p>Internal login for dispatch and accounts staff. <em>(This login is simulated client-side, but the check mimics the classic mistake of building a query by concatenating raw input, e.g. <code class="hint">... WHERE user='INPUT' AND pass='INPUT'</code>. There is no real database here — the point is to recognize the pattern and reason about the bypass, then think about how parameterized queries fix it.)</em></p>
+      <label for="lg-user">Username</label>
+      <input type="text" id="lg-user" placeholder="username">
+      <label for="lg-pass">Password</label>
+      <input type="password" id="lg-pass" placeholder="password">
+      <button class="action" id="lg-submit">Sign in</button>
+      <div class="flagbox" id="lg-result"></div>
+      <div id="lg-admin"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="fmax">
+    <span>© 2004–2026 Kaldera Freight Ltd (fictional company, for training use only)</span>
+    <span>legacy-shared-host-03.example · CMS build 2022.03</span>
+  </div>
+</footer>
+
+<button class="keybtn" id="keytoggle">Instructor answer key</button>
+<div class="keypanel" id="keypanel">
+  <strong>Answer key — what's planted, and how to patch it</strong>
+
+  <h4>1. OSINT surface</h4>
+  Page source contains a code comment with a fake staging URL, placeholder API key, a leftover QA account, and a ticket reference. The Team section exposes a predictable email-naming pattern (f.lastname@domain), which in real assessments is exactly how you'd build a phishing/credential-stuffing target list. <br><br>
+  <u>Fix:</u> never leave debug/TODO comments or credentials in shipped source; strip them in a build step. Avoid publishing a guessable email pattern alongside full staff names, or at least be aware of the exposure.
+
+  <h4>2. robots.txt-style hint</h4>
+  The team page mentions <code class="hint">/staff-portal/</code> and <code class="hint">/admin-legacy/</code> as "disallowed" — a classic case of robots.txt being used to hide paths instead of restrict crawling, which actually advertises them to anyone reading the file.<br><br>
+  <u>Fix:</u> robots.txt is not access control. Sensitive paths need real authentication/authorization, not "security through obscurity."
+
+  <h4>3. Reflected XSS (Feedback wall)</h4>
+  User input is inserted with <code class="hint">innerHTML</code> without escaping, so HTML/JS in the message executes.<br><br>
+  <u>Fix:</u> escape output (encode &lt;, &gt;, &amp;, quotes) or use <code class="hint">textContent</code>/safe templating instead of raw HTML insertion; apply a Content-Security-Policy as defense in depth.
+
+  <h4>4. Naive login "SQL" bypass</h4>
+  The login check simulates building a query like <code class="hint">user='x' AND pass='y'</code> by string concatenation. Entering a username like <code class="hint">' OR '1'='1</code> makes the simulated check pass regardless of password — mirroring real SQL injection.<br><br>
+  <u>Fix:</u> use parameterized queries / prepared statements, never concatenate user input into a query string; also enforce proper hashing for passwords and rate-limit login attempts.
+
+  <h4>Suggested exercise flow</h4>
+  1) Reconnaissance: read page source, find the comment, note the email pattern, note the "disallowed" paths.<br>
+  2) Try the XSS payload in Feedback, observe execution, then rewrite the render function safely (this is a static page, so as a stretch task try patching the JS below to use textContent).<br>
+  3) Work out the login bypass, then discuss/write what a parameterized query fix would look like in a real backend language (e.g. Python + psycopg2, or Node + pg).
+</div>
+
+<script>
+(function(){
+  // ---- nav ----
+  const buttons = document.querySelectorAll('nav.main button');
+  const sections = document.querySelectorAll('main section');
+  buttons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      buttons.forEach(b=>b.classList.remove('active'));
+      sections.forEach(s=>s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.target).classList.add('active');
+    });
+  });
+
+  // ---- INTENTIONALLY VULNERABLE: reflected XSS via innerHTML ----
+  // Training note: this is deliberately unsafe. Do not copy this pattern.
+  document.getElementById('fb-submit').addEventListener('click', ()=>{
+    const name = document.getElementById('fb-name').value || 'Anonymous';
+    const msg = document.getElementById('fb-msg').value || '';
+    const wall = document.getElementById('fb-wall');
+    const entry = document.createElement('div');
+    entry.className = 'msg';
+    // VULNERABLE ON PURPOSE: raw innerHTML, no escaping
+    entry.innerHTML = '<div class="who">' + name + ', just now</div>' + msg;
+    wall.prepend(entry);
+    document.getElementById('fb-msg').value='';
+  });
+
+  // ---- INTENTIONALLY VULNERABLE: naive "query concatenation" login ----
+  // Training note: this simulates classic SQL injection via string building.
+  // No real database is involved — it's a JS stand-in so the pattern is safe to explore.
+  document.getElementById('lg-submit').addEventListener('click', ()=>{
+    const user = document.getElementById('lg-user').value;
+    const pass = document.getElementById('lg-pass').value;
+    const resultBox = document.getElementById('lg-result');
+    const adminBox = document.getElementById('lg-admin');
+    adminBox.innerHTML = '';
+
+    // Simulated "query": WHERE username='<user>' AND password='<pass>'
+    // We fake the injection by literally checking for a tautology pattern,
+    // exactly like an unparameterized query would be tricked.
+    const simulatedQuery = "SELECT * FROM staff WHERE username='" + user + "' AND password='" + pass + "'";
+    const injected = /'\s*or\s*'?1'?\s*=\s*'?1/i.test(user) || /'\s*or\s*'?1'?\s*=\s*'?1/i.test(pass) || user.includes("--") || user.includes("' OR '");
+
+    const validUser = (user === 'j.vitols' && pass === 'correcthorsebattery');
+
+    if (validUser || injected) {
+      resultBox.className = 'flagbox show';
+      resultBox.style.borderColor = 'var(--ok)';
+      resultBox.style.background = '#eef6ef';
+      resultBox.style.color = 'var(--ok)';
+      resultBox.textContent = injected
+        ? 'Login "succeeded" via a tautology bypass — this simulates classic SQL injection against an unparameterized query.'
+        : 'Login succeeded with valid credentials.';
+      adminBox.innerHTML = '<div class="adminpanel"><strong>Simulated staff dashboard</strong><br>'
+        + 'Simulated query that ran:<br><code style="font-size:.75rem;">' + simulatedQuery.replace(/</g,'&lt;') + '</code>'
+        + '<br><br>Think about it: what would a parameterized version of this query look like?</div>';
+    } else {
+      resultBox.className = 'flagbox show';
+      resultBox.textContent = 'Login failed.';
+    }
+  });
+
+  // ---- answer key toggle ----
+  const keyBtn = document.getElementById('keytoggle');
+  const keyPanel = document.getElementById('keypanel');
+  keyBtn.addEventListener('click', ()=>keyPanel.classList.toggle('show'));
+})();
+</script>
+
+</body>
+</html>
